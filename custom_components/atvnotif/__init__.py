@@ -109,7 +109,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 notifier = get_notifier(host, device_id)
                 duration = call.data.get("duration")
                 if duration is None:
-                    duration = 5
+                    duration = 15
                 position = call.data.get("position")
                 if position is None:
                     position = 0
@@ -117,6 +117,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 if priority is None:
                     priority = 1
                 sender = call.data.get("sender")
+                title = call.data.get("title")
+                if title is None:
+                    title = "Home Assistant"
                 interact = call.data.get("interact")
                 if interact is None:
                     interact = False
@@ -129,7 +132,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
                 await notifier.async_notify(
                     message=call.data["message"],
-                    title=call.data.get("title"),
+                    title=title,
                     sender=sender,
                     duration=duration,
                     position=position,
@@ -157,9 +160,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 vol.Optional("host"): vol.Maybe(str),
                 vol.Optional("device_id"): vol.Maybe(str),
                 vol.Required("message"): str,
-                vol.Optional("title"): vol.Maybe(str),
+                vol.Optional("title", default="Home Assistant"): vol.Maybe(str),
                 vol.Optional("sender"): vol.Maybe(str),
-                vol.Optional("duration", default=5): vol.Maybe(vol.All(vol.Coerce(int), vol.Range(min=1, max=300))),
+                vol.Optional("duration", default=15): vol.Maybe(vol.All(vol.Coerce(int), vol.Range(min=1, max=300))),
                 vol.Optional("position", default=0): vol.Maybe(vol.All(vol.Coerce(int), vol.Range(min=0, max=3))),
                 vol.Optional("priority", default=1): vol.Maybe(vol.All(vol.Coerce(int), vol.Range(min=0, max=2))),
                 vol.Optional("bg_color"): vol.Maybe(vol.Any(int, list)),

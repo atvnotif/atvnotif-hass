@@ -13,6 +13,7 @@ notify:
       name: Title
       description: Notification title shown above the message.
       required: false
+      default: "Home Assistant"
       example: "Doorbell"
       selector:
         text:
@@ -27,7 +28,7 @@ notify:
       name: Duration (seconds)
       description: How long the notification stays on screen (1–300).
       required: false
-      default: 5
+      default: 15
       selector:
         number:
           min: 1
