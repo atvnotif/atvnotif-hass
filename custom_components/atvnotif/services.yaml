@@ -1,0 +1,25 @@
+open_app:
+  name: Open App
+  description: Launch an app on the Android TV by package name.
+  fields:
+    package_name:
+      name: Package Name
+      description: The Android package name of the app to launch (e.g. com.netflix.ninja).
+      required: true
+      example: "com.netflix.ninja"
+      selector:
+        text:
+    host:
+      name: Host (optional)
+      description: IP address of the TV to target. If omitted, the first configured TV is used.
+      required: false
+      example: "192.168.1.100"
+      selector:
+        text:
+    device_id:
+      name: Device (optional)
+      description: Target a specific configured Android TV Notifier device.
+      required: false
+      selector:
+        device:
+          integration: atvnotif
