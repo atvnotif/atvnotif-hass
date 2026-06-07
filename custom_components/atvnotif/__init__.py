@@ -84,6 +84,61 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             })
         )
 
+    if not hass.services.has_service(DOMAIN, "notify"):
+        async def handle_notify(call):
+            host = call.data.get("host")
+            device_id = call.data.get("device_id")
+            try:
+                notifier = get_notifier(host, device_id)
+                await notifier.async_notify(
+                    message=call.data["message"],
+                    title=call.data.get("title"),
+                    sender=call.data.get("sender", "Home Assistant"),
+                    duration=call.data.get("duration", 5),
+                    position=call.data.get("position", 0),
+                    priority=call.data.get("priority", 1),
+                    bg_color=call.data.get("bg_color"),
+                    title_color=call.data.get("title_color"),
+                    msg_color=call.data.get("msg_color"),
+                    title_size=call.data.get("title_size"),
+                    msg_size=call.data.get("msg_size"),
+                    icon=call.data.get("icon"),
+                    small_icon=call.data.get("small_icon"),
+                    big_image=call.data.get("big_image"),
+                    interact=call.data.get("interact", False),
+                    notif_sound=call.data.get("notif_sound", True),
+                    wakeup=call.data.get("wakeup", True),
+                )
+            except Exception as err:
+                _LOGGER.error("Failed to send notification: %s", err)
+
+        hass.services.async_register(
+            DOMAIN,
+            "notify",
+            handle_notify,
+            schema=vol.Schema({
+                vol.Optional("host"): str,
+                vol.Optional("device_id"): str,
+                vol.Required("message"): str,
+                vol.Optional("title"): str,
+                vol.Optional("sender", default="Home Assistant"): str,
+                vol.Optional("duration", default=5): vol.All(int, vol.Range(min=1, max=300)),
+                vol.Optional("position", default=0): vol.All(int, vol.Range(min=0, max=3)),
+                vol.Optional("priority", default=1): vol.All(int, vol.Range(min=0, max=2)),
+                vol.Optional("bg_color"): int,
+                vol.Optional("title_color"): int,
+                vol.Optional("msg_color"): int,
+                vol.Optional("title_size"): vol.Coerce(float),
+                vol.Optional("msg_size"): vol.Coerce(float),
+                vol.Optional("icon"): str,
+                vol.Optional("small_icon"): str,
+                vol.Optional("big_image"): str,
+                vol.Optional("interact", default=False): bool,
+                vol.Optional("notif_sound", default=True): bool,
+                vol.Optional("wakeup", default=True): bool,
+            })
+        )
+
     platforms = _get_platforms(entry)
     await hass.config_entries.async_forward_entry_setups(entry, platforms)
     return True

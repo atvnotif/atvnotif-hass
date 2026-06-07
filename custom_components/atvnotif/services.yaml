@@ -1,3 +1,170 @@
+notify:
+  name: Send Notification
+  description: Send a fully-featured notification to the Android TV Notifier app.
+  fields:
+    message:
+      name: Message
+      description: The notification body text.
+      required: true
+      example: "Someone is at the door!"
+      selector:
+        text:
+    title:
+      name: Title
+      description: Notification title shown above the message.
+      required: false
+      example: "Doorbell"
+      selector:
+        text:
+    sender:
+      name: Sender
+      description: App/source name shown on the notification (default: Home Assistant).
+      required: false
+      example: "Home Assistant"
+      selector:
+        text:
+    duration:
+      name: Duration (seconds)
+      description: How long the notification stays on screen (1–300).
+      required: false
+      default: 5
+      selector:
+        number:
+          min: 1
+          max: 300
+          unit_of_measurement: s
+    position:
+      name: Position
+      description: "Screen position: 0=Top-Right, 1=Top-Left, 2=Bottom-Right, 3=Bottom-Left."
+      required: false
+      default: 0
+      selector:
+        select:
+          options:
+            - label: "Top-Right"
+              value: "0"
+            - label: "Top-Left"
+              value: "1"
+            - label: "Bottom-Right"
+              value: "2"
+            - label: "Bottom-Left"
+              value: "3"
+    priority:
+      name: Priority
+      description: "0=Low, 1=Default, 2=High."
+      required: false
+      default: 1
+      selector:
+        select:
+          options:
+            - label: "Low"
+              value: "0"
+            - label: "Default"
+              value: "1"
+            - label: "High"
+              value: "2"
+    bg_color:
+      name: Background Color
+      description: Background color as an ARGB integer (e.g. -16777216 = black).
+      required: false
+      selector:
+        number:
+          min: -2147483648
+          max: 2147483647
+          mode: box
+    title_color:
+      name: Title Color
+      description: Title text color as an ARGB integer.
+      required: false
+      selector:
+        number:
+          min: -2147483648
+          max: 2147483647
+          mode: box
+    msg_color:
+      name: Message Color
+      description: Message text color as an ARGB integer.
+      required: false
+      selector:
+        number:
+          min: -2147483648
+          max: 2147483647
+          mode: box
+    title_size:
+      name: Title Font Size
+      description: Title text size (float, e.g. 16.0).
+      required: false
+      selector:
+        number:
+          min: 8
+          max: 72
+          step: 0.5
+          mode: box
+    msg_size:
+      name: Message Font Size
+      description: Message text size (float, e.g. 14.0).
+      required: false
+      selector:
+        number:
+          min: 8
+          max: 72
+          step: 0.5
+          mode: box
+    icon:
+      name: Icon URL
+      description: URL of a large icon image to display on the notification.
+      required: false
+      example: "https://i.imgur.com/example.png"
+      selector:
+        text:
+    small_icon:
+      name: Small Icon URL
+      description: URL of a small icon image.
+      required: false
+      selector:
+        text:
+    big_image:
+      name: Big Image URL
+      description: URL of a full-width image shown below the notification.
+      required: false
+      selector:
+        text:
+    interact:
+      name: Require Interaction
+      description: If true, the notification stays until the user dismisses it.
+      required: false
+      default: false
+      selector:
+        boolean:
+    notif_sound:
+      name: Play Sound
+      description: Play the notification sound on the TV.
+      required: false
+      default: true
+      selector:
+        boolean:
+    wakeup:
+      name: Wake Up TV
+      description: Wake the TV screen when the notification arrives.
+      required: false
+      default: true
+      selector:
+        boolean:
+    host:
+      name: Host (optional)
+      description: IP address of the TV to target. Uses first configured TV if omitted.
+      required: false
+      example: "192.168.1.100"
+      selector:
+        text:
+    device_id:
+      name: Device (optional)
+      description: Target a specific configured Android TV Notifier device.
+      required: false
+      selector:
+        device:
+          integration: atvnotif
+
 open_app:
   name: Open App
   description: Launch an app on the Android TV by package name.
