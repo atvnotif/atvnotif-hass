@@ -95,8 +95,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             "open_app",
             handle_open_app,
             schema=vol.Schema({
-                vol.Optional("host"): str,
-                vol.Optional("device_id"): str,
+                vol.Optional("host"): vol.Maybe(str),
+                vol.Optional("device_id"): vol.Maybe(str),
                 vol.Required("package_name"): str,
             })
         )
@@ -107,13 +107,35 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             device_id = call.data.get("device_id")
             try:
                 notifier = get_notifier(host, device_id)
+                duration = call.data.get("duration")
+                if duration is None:
+                    duration = 5
+                position = call.data.get("position")
+                if position is None:
+                    position = 0
+                priority = call.data.get("priority")
+                if priority is None:
+                    priority = 1
+                sender = call.data.get("sender")
+                if sender is None:
+                    sender = "Home Assistant"
+                interact = call.data.get("interact")
+                if interact is None:
+                    interact = False
+                notif_sound = call.data.get("notif_sound")
+                if notif_sound is None:
+                    notif_sound = True
+                wakeup = call.data.get("wakeup")
+                if wakeup is None:
+                    wakeup = True
+
                 await notifier.async_notify(
                     message=call.data["message"],
                     title=call.data.get("title"),
-                    sender=call.data.get("sender", "Home Assistant"),
-                    duration=call.data.get("duration", 5),
-                    position=call.data.get("position", 0),
-                    priority=call.data.get("priority", 1),
+                    sender=sender,
+                    duration=duration,
+                    position=position,
+                    priority=priority,
                     bg_color=_parse_color(call.data.get("bg_color")),
                     title_color=_parse_color(call.data.get("title_color")),
                     msg_color=_parse_color(call.data.get("msg_color")),
@@ -122,9 +144,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     icon=call.data.get("icon"),
                     small_icon=call.data.get("small_icon"),
                     big_image=call.data.get("big_image"),
-                    interact=call.data.get("interact", False),
-                    notif_sound=call.data.get("notif_sound", True),
-                    wakeup=call.data.get("wakeup", True),
+                    interact=interact,
+                    notif_sound=notif_sound,
+                    wakeup=wakeup,
                 )
             except Exception as err:
                 _LOGGER.error("Failed to send notification: %s", err)
@@ -134,25 +156,25 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             "notify",
             handle_notify,
             schema=vol.Schema({
-                vol.Optional("host"): str,
-                vol.Optional("device_id"): str,
+                vol.Optional("host"): vol.Maybe(str),
+                vol.Optional("device_id"): vol.Maybe(str),
                 vol.Required("message"): str,
-                vol.Optional("title"): str,
-                vol.Optional("sender", default="Home Assistant"): str,
-                vol.Optional("duration", default=5): vol.All(vol.Coerce(int), vol.Range(min=1, max=300)),
-                vol.Optional("position", default=0): vol.All(vol.Coerce(int), vol.Range(min=0, max=3)),
-                vol.Optional("priority", default=1): vol.All(vol.Coerce(int), vol.Range(min=0, max=2)),
-                vol.Optional("bg_color"): vol.Any(int, list),
-                vol.Optional("title_color"): vol.Any(int, list),
-                vol.Optional("msg_color"): vol.Any(int, list),
-                vol.Optional("title_size"): vol.Coerce(float),
-                vol.Optional("msg_size"): vol.Coerce(float),
-                vol.Optional("icon"): str,
-                vol.Optional("small_icon"): str,
-                vol.Optional("big_image"): str,
-                vol.Optional("interact", default=False): bool,
-                vol.Optional("notif_sound", default=True): bool,
-                vol.Optional("wakeup", default=True): bool,
+                vol.Optional("title"): vol.Maybe(str),
+                vol.Optional("sender", default="Home Assistant"): vol.Maybe(str),
+                vol.Optional("duration", default=5): vol.Maybe(vol.All(vol.Coerce(int), vol.Range(min=1, max=300))),
+                vol.Optional("position", default=0): vol.Maybe(vol.All(vol.Coerce(int), vol.Range(min=0, max=3))),
+                vol.Optional("priority", default=1): vol.Maybe(vol.All(vol.Coerce(int), vol.Range(min=0, max=2))),
+                vol.Optional("bg_color"): vol.Maybe(vol.Any(int, list)),
+                vol.Optional("title_color"): vol.Maybe(vol.Any(int, list)),
+                vol.Optional("msg_color"): vol.Maybe(vol.Any(int, list)),
+                vol.Optional("title_size"): vol.Maybe(vol.Coerce(float)),
+                vol.Optional("msg_size"): vol.Maybe(vol.Coerce(float)),
+                vol.Optional("icon"): vol.Maybe(str),
+                vol.Optional("small_icon"): vol.Maybe(str),
+                vol.Optional("big_image"): vol.Maybe(str),
+                vol.Optional("interact", default=False): vol.Maybe(bool),
+                vol.Optional("notif_sound", default=True): vol.Maybe(bool),
+                vol.Optional("wakeup", default=True): vol.Maybe(bool),
             })
         )
 
@@ -173,8 +195,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             "info",
             handle_info,
             schema=vol.Schema({
-                vol.Optional("host"): str,
-                vol.Optional("device_id"): str,
+                vol.Optional("host"): vol.Maybe(str),
+                vol.Optional("device_id"): vol.Maybe(str),
             }),
             supports_response=SupportsResponse.ONLY,
         )
@@ -202,8 +224,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             "apps",
             handle_apps,
             schema=vol.Schema({
-                vol.Optional("host"): str,
-                vol.Optional("device_id"): str,
+                vol.Optional("host"): vol.Maybe(str),
+                vol.Optional("device_id"): vol.Maybe(str),
             }),
             supports_response=SupportsResponse.ONLY,
         )
@@ -211,7 +233,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Register custom discover service (once only)
     if not hass.services.has_service(DOMAIN, "discover"):
         async def handle_discover(call):
-            timeout = call.data.get("timeout", 6.0)
+            timeout = call.data.get("timeout")
+            if timeout is None:
+                timeout = 6.0
             try:
                 devices = await hass.async_add_executor_job(discover_devices, timeout)
                 return {"devices": devices}
@@ -223,7 +247,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             "discover",
             handle_discover,
             schema=vol.Schema({
-                vol.Optional("timeout", default=6.0): vol.Coerce(float),
+                vol.Optional("timeout", default=6.0): vol.Maybe(vol.Coerce(float)),
             }),
             supports_response=SupportsResponse.ONLY,
         )
