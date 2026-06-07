@@ -157,7 +157,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 vol.Optional("host"): vol.Maybe(str),
                 vol.Optional("device_id"): vol.Maybe(str),
                 vol.Required("message"): str,
-                vol.Optional("title", default="Home Assistant"): vol.Maybe(str),
+                vol.Optional("title"): vol.Maybe(str),
                 vol.Optional("sender"): vol.Maybe(str),
                 vol.Optional("duration", default=15): vol.Maybe(vol.All(vol.Coerce(int), vol.Range(min=1, max=300))),
                 vol.Optional("position", default=0): vol.Maybe(vol.All(vol.Coerce(int), vol.Range(min=0, max=3))),
