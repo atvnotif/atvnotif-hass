@@ -65,31 +65,22 @@ notify:
               value: "2"
     bg_color:
       name: Background Color
-      description: Background color as an ARGB integer (e.g. -16777216 = black).
+      description: Background color for the notification.
       required: false
       selector:
-        number:
-          min: -2147483648
-          max: 2147483647
-          mode: box
+        color_rgb: {}
     title_color:
       name: Title Color
-      description: Title text color as an ARGB integer.
+      description: Title text color.
       required: false
       selector:
-        number:
-          min: -2147483648
-          max: 2147483647
-          mode: box
+        color_rgb: {}
     msg_color:
       name: Message Color
-      description: Message text color as an ARGB integer.
+      description: Message text color.
       required: false
       selector:
-        number:
-          min: -2147483648
-          max: 2147483647
-          mode: box
+        color_rgb: {}
     title_size:
       name: Title Font Size
       description: Title text size (float, e.g. 16.0).

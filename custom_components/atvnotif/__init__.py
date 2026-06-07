@@ -23,8 +23,20 @@ except ImportError:
     from .atvnotif import ATVNotifier
     from .atvnotif.discover import discover_devices
     from .atvnotif.qr import decode_qr_image
-
 _LOGGER = logging.getLogger(__name__)
+
+
+def _parse_color(val):
+    """Helper to convert list [R, G, B] to signed ARGB 32-bit integer."""
+    if val is None:
+        return None
+    if isinstance(val, (list, tuple)) and len(val) == 3:
+        r, g, b = val
+        argb = 4278190080 + (r << 16) + (g << 8) + b
+        if argb >= 2147483648:
+            argb -= 4294967296
+        return argb
+    return val
 
 
 def _get_platforms(entry: ConfigEntry) -> list:
@@ -102,9 +114,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     duration=call.data.get("duration", 5),
                     position=call.data.get("position", 0),
                     priority=call.data.get("priority", 1),
-                    bg_color=call.data.get("bg_color"),
-                    title_color=call.data.get("title_color"),
-                    msg_color=call.data.get("msg_color"),
+                    bg_color=_parse_color(call.data.get("bg_color")),
+                    title_color=_parse_color(call.data.get("title_color")),
+                    msg_color=_parse_color(call.data.get("msg_color")),
                     title_size=call.data.get("title_size"),
                     msg_size=call.data.get("msg_size"),
                     icon=call.data.get("icon"),
@@ -130,9 +142,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 vol.Optional("duration", default=5): vol.All(int, vol.Range(min=1, max=300)),
                 vol.Optional("position", default=0): vol.All(int, vol.Range(min=0, max=3)),
                 vol.Optional("priority", default=1): vol.All(int, vol.Range(min=0, max=2)),
-                vol.Optional("bg_color"): int,
-                vol.Optional("title_color"): int,
-                vol.Optional("msg_color"): int,
+                vol.Optional("bg_color"): vol.Any(int, list),
+                vol.Optional("title_color"): vol.Any(int, list),
+                vol.Optional("msg_color"): vol.Any(int, list),
                 vol.Optional("title_size"): vol.Coerce(float),
                 vol.Optional("msg_size"): vol.Coerce(float),
                 vol.Optional("icon"): str,
