@@ -111,7 +111,8 @@ class ATVNotifConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._abort_if_unique_id_configured()
 
         self.discovered_ip = discovery_info.host
-        self.discovered_port = discovery_info.port or DEFAULT_PORT
+        raw_port = discovery_info.port or 0
+        self.discovered_port = raw_port if raw_port > 1024 else DEFAULT_PORT
         self.discovered_name = discovery_info.properties.get("n", "Android TV")
         self.discovered_app_version = discovery_info.properties.get("v")
 
