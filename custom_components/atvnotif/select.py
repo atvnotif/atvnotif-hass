@@ -60,6 +60,8 @@ class ATVAppLauncherSelect(SelectEntity):
             name=entry.title,
             manufacturer="Smart Projects",
             model="Android TV Notifier",
+            sw_version=entry.data.get("app_version"),
+            configuration_url=f"http://{entry.data[CONF_IP_ADDRESS]}:{entry.data.get(CONF_PORT, DEFAULT_PORT)}",
         )
         # Internal map: display name → package name
         self._app_map: dict[str, str] = {}

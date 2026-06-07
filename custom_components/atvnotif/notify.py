@@ -58,6 +58,8 @@ class ATVNotifEntity(NotifyEntity):
             name=entry.title,
             manufacturer="Smart Projects",
             model="Android TV Notifier",
+            sw_version=entry.data.get("app_version"),
+            configuration_url=f"http://{entry.data[CONF_IP_ADDRESS]}:{entry.data.get(CONF_PORT, DEFAULT_PORT)}",
         )
 
     async def async_send_message(self, message: str, title: str | None = None) -> None:

@@ -111,10 +111,11 @@ class ATVNotifConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._abort_if_unique_id_configured()
 
         self.discovered_ip = discovery_info.host
-        self.discovered_port = discovery_info.port
+        self.discovered_port = discovery_info.port or DEFAULT_PORT
         self.discovered_name = discovery_info.properties.get("n", "Android TV")
-        
-        # Try to extract the base58 pairing key from attributes
+        self.discovered_app_version = discovery_info.properties.get("v")
+
+        # Try to extract the base58 pairing key from mDNS attributes
         base58_code = discovery_info.properties.get("i")
         self.discovered_pairing_code = None
         if base58_code:
@@ -141,6 +142,7 @@ class ATVNotifConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         CONF_IP_ADDRESS: self.discovered_ip,
                         CONF_PORT: self.discovered_port,
                         CONF_PAIRING_CODE: pairing_code,
+                        "app_version": self.discovered_app_version,
                     },
                 )
 
