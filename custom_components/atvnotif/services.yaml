@@ -13,6 +13,7 @@ notify:
       name: Title
       description: Notification title shown above the message.
       required: false
+      default: "Home Assistant"
       example: "Doorbell"
       selector:
         text:
