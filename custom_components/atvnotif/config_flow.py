@@ -204,9 +204,6 @@ class ATVNotifConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 class ATVNotifOptionsFlow(config_entries.OptionsFlow):
     """Options flow to toggle optional features (app launcher, notify entity)."""
 
-    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
-        self.config_entry = config_entry
-
     async def async_step_init(self, user_input=None):
         """Manage the integration options."""
         if user_input is not None:
