@@ -38,7 +38,12 @@ async def async_setup_entry(
 
 
 class ATVAppLauncherSelect(SelectEntity):
-    """A select entity listing all installed apps on the Android TV."""
+    """Select entity listing all installed apps on the Android TV.
+
+    Displays human-readable app names; internally maps them to package names for
+    launch.  Extra state attributes expose info returned by /info (device name,
+    model, etc.) as well as the count of installed apps.
+    """
 
     _attr_has_entity_name = True
     _attr_name = "Launch App"
@@ -56,13 +61,45 @@ class ATVAppLauncherSelect(SelectEntity):
             manufacturer="Smart Projects",
             model="Android TV Notifier",
         )
+        # Internal map: display name → package name
+        self._app_map: dict[str, str] = {}
+        # Extra attributes from /info
+        self._tv_info: dict = {}
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        """Return TV info + app count as extra attributes."""
+        attrs = dict(self._tv_info)
+        attrs["app_count"] = len(self._app_map)
+        return attrs
 
     async def async_update(self) -> None:
-        """Fetch the current app list from the TV."""
+        """Fetch app list and TV info from the device."""
+        # --- /info ---
         try:
-            apps: list[str] = await self._notifier.async_get_apps()
+            raw_info = await self._notifier.async_get_info()
+            # /info returns a plain string: the device name
+            self._tv_info = {"tv_name": raw_info.strip()}
+        except Exception as err:
+            _LOGGER.warning("Could not fetch /info from TV: %s", err)
+
+        # --- /apps ---
+        try:
+            apps: list[dict] = await self._notifier.async_get_apps()
             if apps:
-                self._attr_options = [PLACEHOLDER] + sorted(apps)
+                # Build name→package map; deduplicate display names
+                app_map: dict[str, str] = {}
+                for app in apps:
+                    display = app.get("n") or app.get("p", "")
+                    package = app.get("p", "")
+                    if display and package:
+                        # If two apps share a display name, append package suffix
+                        key = display
+                        if key in app_map and app_map[key] != package:
+                            key = f"{display} ({package})"
+                        app_map[key] = package
+                self._app_map = dict(sorted(app_map.items()))
+                self._attr_options = [PLACEHOLDER] + list(self._app_map.keys())
             else:
                 self._attr_options = [PLACEHOLDER]
         except Exception as err:
@@ -73,11 +110,15 @@ class ATVAppLauncherSelect(SelectEntity):
         """Launch the selected app on the TV."""
         if option == PLACEHOLDER:
             return
+        package = self._app_map.get(option)
+        if not package:
+            _LOGGER.error("No package found for app '%s'", option)
+            return
         try:
-            await self._notifier.async_open_app(option)
-            _LOGGER.debug("Launched app %s on %s", option, self._notifier.host)
+            await self._notifier.async_open_app(package)
+            _LOGGER.debug("Launched %s (%s) on %s", option, package, self._notifier.host)
         except Exception as err:
-            _LOGGER.error("Failed to launch app %s: %s", option, err)
+            _LOGGER.error("Failed to launch app %s: %s", package, err)
         # Reset back to placeholder after launching
         self._attr_current_option = PLACEHOLDER
         self.async_write_ha_state()

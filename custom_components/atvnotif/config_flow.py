@@ -144,3 +144,41 @@ class ATVNotifConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
+    async def async_step_reconfigure(self, user_input=None):
+        """Allow the user to edit IP, port, and pairing code of an existing entry."""
+        entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
+        errors = {}
+
+        if user_input is not None:
+            ip = user_input.get(CONF_IP_ADDRESS, "").strip()
+            pairing_code = user_input.get(CONF_PAIRING_CODE, "").strip()
+            port = user_input.get(CONF_PORT, DEFAULT_PORT)
+
+            if not ip:
+                errors["base"] = "invalid_host"
+            elif not pairing_code:
+                errors["base"] = "invalid_pairing_code"
+            else:
+                self.hass.config_entries.async_update_entry(
+                    entry,
+                    data={
+                        CONF_IP_ADDRESS: ip,
+                        CONF_PORT: port,
+                        CONF_PAIRING_CODE: pairing_code,
+                    },
+                )
+                await self.hass.config_entries.async_reload(entry.entry_id)
+                return self.async_abort(reason="reconfigure_successful")
+
+        current = entry.data if entry else {}
+        schema = vol.Schema({
+            vol.Required(CONF_IP_ADDRESS, default=current.get(CONF_IP_ADDRESS, "")): str,
+            vol.Required(CONF_PORT, default=current.get(CONF_PORT, DEFAULT_PORT)): int,
+            vol.Required(CONF_PAIRING_CODE, default=current.get(CONF_PAIRING_CODE, "")): str,
+        })
+
+        return self.async_show_form(
+            step_id="reconfigure",
+            data_schema=schema,
+            errors=errors,
+        )
