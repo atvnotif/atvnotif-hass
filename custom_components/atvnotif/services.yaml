@@ -18,7 +18,7 @@ notify:
         text:
     sender:
       name: Sender
-      description: "App/source name shown on the notification (default: Home Assistant)."
+      description: "App/source name shown on the notification. If omitted, the sender is hidden."
       required: false
       example: "Home Assistant"
       selector:

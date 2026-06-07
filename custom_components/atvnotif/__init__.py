@@ -117,8 +117,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 if priority is None:
                     priority = 1
                 sender = call.data.get("sender")
-                if sender is None:
-                    sender = "Home Assistant"
                 interact = call.data.get("interact")
                 if interact is None:
                     interact = False
@@ -160,7 +158,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 vol.Optional("device_id"): vol.Maybe(str),
                 vol.Required("message"): str,
                 vol.Optional("title"): vol.Maybe(str),
-                vol.Optional("sender", default="Home Assistant"): vol.Maybe(str),
+                vol.Optional("sender"): vol.Maybe(str),
                 vol.Optional("duration", default=5): vol.Maybe(vol.All(vol.Coerce(int), vol.Range(min=1, max=300))),
                 vol.Optional("position", default=0): vol.Maybe(vol.All(vol.Coerce(int), vol.Range(min=0, max=3))),
                 vol.Optional("priority", default=1): vol.Maybe(vol.All(vol.Coerce(int), vol.Range(min=0, max=2))),
