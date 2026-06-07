@@ -6,8 +6,9 @@
   "documentation": "https://github.com/smrtprjcts/atvnotif",
   "integration_type": "hub",
   "iot_class": "local_push",
+  "issue_tracker": "https://github.com/smrtprjcts/atvnotif/issues",
   "requirements": ["cryptography>=35.0.0", "httpx>=0.20.0"],
-  "version": "1.1.4",
+  "version": "1.1.5",
   "zeroconf": [
     {
       "type": "_atvnotif._tcp.local."

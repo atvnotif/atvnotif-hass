@@ -57,7 +57,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     # Register custom open_app service (once only)
     if not hass.services.has_service(DOMAIN, "open_app"):
-        def get_notifier(host=None, device_id=None):
+        def get_notifier(host=None, device_id=None, entity_id=None):
             if not hass.data[DOMAIN]:
                 raise ValueError("No TV configured")
             config_data = None
@@ -74,6 +74,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     device = device_reg.async_get(device_id)
                     if device:
                         entry_id = next(iter(device.config_entries))
+                        config_data = hass.data[DOMAIN].get(entry_id)
+            elif entity_id:
+                if isinstance(entity_id, (list, tuple)):
+                    entity_id = entity_id[0] if entity_id else None
+                if entity_id:
+                    from homeassistant.helpers import entity_registry as er
+                    ent_reg = er.async_get(hass)
+                    entity_entry = ent_reg.async_get(entity_id)
+                    if entity_entry:
+                        entry_id = entity_entry.config_entry_id
                         config_data = hass.data[DOMAIN].get(entry_id)
             if not config_data:
                 config_data = next(iter(hass.data[DOMAIN].values()))
@@ -184,8 +194,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         async def handle_info(call):
             host = call.data.get("host")
             device_id = call.data.get("device_id")
+            entity_id = call.data.get("entity_id")
             try:
-                notifier = get_notifier(host, device_id)
+                notifier = get_notifier(host, device_id, entity_id)
                 name = await notifier.async_get_info()
                 return {"name": name}
             except Exception as err:
@@ -198,6 +209,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             schema=vol.Schema({
                 vol.Optional("host"): vol.Maybe(str),
                 vol.Optional("device_id"): vol.Maybe(str),
+                vol.Optional("entity_id"): vol.Maybe(vol.Any(str, [str])),
             }),
             supports_response=SupportsResponse.ONLY,
         )
@@ -207,8 +219,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         async def handle_apps(call):
             host = call.data.get("host")
             device_id = call.data.get("device_id")
+            entity_id = call.data.get("entity_id")
             try:
-                notifier = get_notifier(host, device_id)
+                notifier = get_notifier(host, device_id, entity_id)
                 apps = await notifier.async_get_apps()
                 mapped_apps = []
                 for app in apps:
@@ -227,6 +240,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             schema=vol.Schema({
                 vol.Optional("host"): vol.Maybe(str),
                 vol.Optional("device_id"): vol.Maybe(str),
+                vol.Optional("entity_id"): vol.Maybe(vol.Any(str, [str])),
             }),
             supports_response=SupportsResponse.ONLY,
         )
@@ -249,6 +263,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             handle_discover,
             schema=vol.Schema({
                 vol.Optional("timeout", default=6.0): vol.Maybe(vol.Coerce(float)),
+                vol.Optional("entity_id"): vol.Maybe(vol.Any(str, [str])),
             }),
             supports_response=SupportsResponse.ONLY,
         )
@@ -289,6 +304,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             handle_qr,
             schema=vol.Schema({
                 vol.Required("image"): str,
+                vol.Optional("entity_id"): vol.Maybe(vol.Any(str, [str])),
             }),
             supports_response=SupportsResponse.ONLY,
         )
