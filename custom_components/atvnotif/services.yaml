@@ -190,3 +190,91 @@ open_app:
       selector:
         device:
           integration: atvnotif
+
+info:
+  name: Get Device Info
+  description: Get device details from the Android TV Notifier app.
+  response:
+    optional: false
+  fields:
+    host:
+      name: Host (optional)
+      description: IP address of the TV. If omitted, uses the first configured TV.
+      required: false
+      example: "192.168.2.104"
+      selector:
+        text:
+    device_id:
+      name: Device (optional)
+      description: Target a specific configured Android TV Notifier device.
+      required: false
+      selector:
+        device:
+          integration: atvnotif
+
+apps:
+  name: Get Installed Apps
+  description: Retrieve the list of apps installed on the targeted TV.
+  response:
+    optional: false
+  fields:
+    host:
+      name: Host (optional)
+      description: IP address of the TV. If omitted, uses the first configured TV.
+      required: false
+      example: "192.168.2.104"
+      selector:
+        text:
+    device_id:
+      name: Device (optional)
+      description: Target a specific configured Android TV Notifier device.
+      required: false
+      selector:
+        device:
+          integration: atvnotif
+
+discover:
+  name: Discover TV Devices
+  description: Scan the local network for active Android TV Notifier devices.
+  response:
+    optional: false
+  fields:
+    timeout:
+      name: Timeout
+      description: How long to scan the network in seconds.
+      required: false
+      default: 6.0
+      selector:
+        number:
+          min: 1.0
+          max: 30.0
+          step: 0.5
+          unit_of_measurement: s
+
+qr:
+  name: Decode QR Image
+  description: Extract pairing credentials (IP/code/name) from a QR code image.
+  response:
+    optional: false
+  fields:
+    image_path:
+      name: Local Image Path
+      description: Absolute path to the image file on the Home Assistant server.
+      required: false
+      example: "/config/www/pairing_qr.png"
+      selector:
+        text:
+    image_url:
+      name: Image URL
+      description: HTTP/HTTPS URL of the QR code image.
+      required: false
+      example: "http://192.168.2.4:8123/local/pairing_qr.png"
+      selector:
+        text:
+    image_base64:
+      name: Base64 Encoded Image
+      description: Raw image data encoded in base64 format.
+      required: false
+      selector:
+        text:
+

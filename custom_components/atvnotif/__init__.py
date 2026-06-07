@@ -1,8 +1,10 @@
+import base64
 import logging
 import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, SupportsResponse
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import device_registry as dr
 
 from .const import (
@@ -15,9 +17,11 @@ from .const import (
 )
 
 try:
-    from atvnotif import ATVNotifier
+    from atvnotif import ATVNotifier, discover_devices, decode_qr_image
 except ImportError:
     from .atvnotif import ATVNotifier
+    from .atvnotif.discover import discover_devices
+    from .atvnotif.qr import decode_qr_image
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -137,6 +141,115 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 vol.Optional("notif_sound", default=True): bool,
                 vol.Optional("wakeup", default=True): bool,
             })
+        )
+
+    # Register custom info service (once only)
+    if not hass.services.has_service(DOMAIN, "info"):
+        async def handle_info(call):
+            host = call.data.get("host")
+            device_id = call.data.get("device_id")
+            try:
+                notifier = get_notifier(host, device_id)
+                name = await notifier.async_get_info()
+                return {"name": name}
+            except Exception as err:
+                raise HomeAssistantError(f"Failed to get device info: {err}") from err
+
+        hass.services.async_register(
+            DOMAIN,
+            "info",
+            handle_info,
+            schema=vol.Schema({
+                vol.Optional("host"): str,
+                vol.Optional("device_id"): str,
+            }),
+            supports_response=SupportsResponse.ONLY,
+        )
+
+    # Register custom apps service (once only)
+    if not hass.services.has_service(DOMAIN, "apps"):
+        async def handle_apps(call):
+            host = call.data.get("host")
+            device_id = call.data.get("device_id")
+            try:
+                notifier = get_notifier(host, device_id)
+                apps = await notifier.async_get_apps()
+                mapped_apps = []
+                for app in apps:
+                    mapped_apps.append({
+                        "name": app.get("n"),
+                        "package": app.get("p"),
+                    })
+                return {"apps": mapped_apps}
+            except Exception as err:
+                raise HomeAssistantError(f"Failed to get apps: {err}") from err
+
+        hass.services.async_register(
+            DOMAIN,
+            "apps",
+            handle_apps,
+            schema=vol.Schema({
+                vol.Optional("host"): str,
+                vol.Optional("device_id"): str,
+            }),
+            supports_response=SupportsResponse.ONLY,
+        )
+
+    # Register custom discover service (once only)
+    if not hass.services.has_service(DOMAIN, "discover"):
+        async def handle_discover(call):
+            timeout = call.data.get("timeout", 6.0)
+            try:
+                devices = await hass.async_add_executor_job(discover_devices, timeout)
+                return {"devices": devices}
+            except Exception as err:
+                raise HomeAssistantError(f"Failed to run discovery: {err}") from err
+
+        hass.services.async_register(
+            DOMAIN,
+            "discover",
+            handle_discover,
+            schema=vol.Schema({
+                vol.Optional("timeout", default=6.0): vol.Coerce(float),
+            }),
+            supports_response=SupportsResponse.ONLY,
+        )
+
+    # Register custom qr service (once only)
+    if not hass.services.has_service(DOMAIN, "qr"):
+        async def handle_qr(call):
+            image_path = call.data.get("image_path")
+            image_url = call.data.get("image_url")
+            image_base64 = call.data.get("image_base64")
+            
+            if image_base64:
+                try:
+                    img_input = base64.b64decode(image_base64)
+                except Exception as err:
+                    raise HomeAssistantError(f"Invalid base64 string: {err}") from err
+            elif image_url:
+                img_input = image_url
+            elif image_path:
+                img_input = image_path
+            else:
+                raise HomeAssistantError("One of image_path, image_url, or image_base64 must be provided")
+            
+            try:
+                result = await hass.async_add_executor_job(decode_qr_image, img_input)
+                return result
+            except Exception as err:
+                raise HomeAssistantError(f"Failed to decode QR image: {err}") from err
+
+        hass.services.async_register(
+            DOMAIN,
+            "qr",
+            handle_qr,
+            schema=vol.Schema({
+                vol.Optional("image_path"): str,
+                vol.Optional("image_url"): str,
+                vol.Optional("image_base64"): str,
+            }),
+            supports_response=SupportsResponse.ONLY,
         )
 
     platforms = _get_platforms(entry)
