@@ -253,28 +253,16 @@ discover:
 
 qr:
   name: Decode QR Image
-  description: Extract pairing credentials (IP/code/name) from a QR code image.
+  description: Extract pairing credentials (IP/code/name) from a QR code image (URL, local path, or Base64 string).
   response:
     optional: false
   fields:
-    image_path:
-      name: Local Image Path
-      description: Absolute path to the image file on the Home Assistant server.
-      required: false
-      example: "/config/www/pairing_qr.png"
-      selector:
-        text:
-    image_url:
-      name: Image URL
-      description: HTTP/HTTPS URL of the QR code image.
-      required: false
+    image:
+      name: Image Input
+      description: The QR code image as an HTTP/HTTPS URL, absolute local file path, or Base64 data string.
+      required: true
       example: "http://192.168.2.4:8123/local/pairing_qr.png"
       selector:
         text:
-    image_base64:
-      name: Base64 Encoded Image
-      description: Raw image data encoded in base64 format.
-      required: false
-      selector:
-        text:
+
 

@@ -1,5 +1,6 @@
 import base64
 import logging
+import os
 import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
@@ -218,21 +219,26 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Register custom qr service (once only)
     if not hass.services.has_service(DOMAIN, "qr"):
         async def handle_qr(call):
-            image_path = call.data.get("image_path")
-            image_url = call.data.get("image_url")
-            image_base64 = call.data.get("image_base64")
+            image_str = call.data["image"].strip()
             
-            if image_base64:
+            if image_str.startswith(("http://", "https://")):
+                img_input = image_str
+            elif image_str.startswith("data:") and "base64," in image_str:
                 try:
-                    img_input = base64.b64decode(image_base64)
+                    base64_data = image_str.split("base64,")[1]
+                    img_input = base64.b64decode(base64_data)
                 except Exception as err:
-                    raise HomeAssistantError(f"Invalid base64 string: {err}") from err
-            elif image_url:
-                img_input = image_url
-            elif image_path:
-                img_input = image_path
+                    raise HomeAssistantError(f"Failed to decode base64 data: {err}") from err
+            elif image_str.startswith(("/", "./", "../")) or os.path.exists(image_str):
+                img_input = image_str
             else:
-                raise HomeAssistantError("One of image_path, image_url, or image_base64 must be provided")
+                # Try decoding as raw base64
+                try:
+                    cleaned_str = "".join(image_str.split())
+                    img_input = base64.b64decode(cleaned_str, validate=True)
+                except Exception:
+                    # Fallback to treating it as a local path
+                    img_input = image_str
             
             try:
                 result = await hass.async_add_executor_job(decode_qr_image, img_input)
@@ -245,9 +251,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             "qr",
             handle_qr,
             schema=vol.Schema({
-                vol.Optional("image_path"): str,
-                vol.Optional("image_url"): str,
-                vol.Optional("image_base64"): str,
+                vol.Required("image"): str,
             }),
             supports_response=SupportsResponse.ONLY,
         )
