@@ -67,11 +67,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                         config_data = entry_data
                         break
             elif device_id:
-                device_reg = dr.async_get(hass)
-                device = device_reg.async_get(device_id)
-                if device:
-                    entry_id = next(iter(device.config_entries))
-                    config_data = hass.data[DOMAIN].get(entry_id)
+                if isinstance(device_id, (list, tuple)):
+                    device_id = device_id[0] if device_id else None
+                if device_id:
+                    device_reg = dr.async_get(hass)
+                    device = device_reg.async_get(device_id)
+                    if device:
+                        entry_id = next(iter(device.config_entries))
+                        config_data = hass.data[DOMAIN].get(entry_id)
             if not config_data:
                 config_data = next(iter(hass.data[DOMAIN].values()))
             return ATVNotifier(

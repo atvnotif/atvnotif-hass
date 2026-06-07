@@ -186,8 +186,9 @@ open_app:
 info:
   name: Get Device Info
   description: Get device details from the Android TV Notifier app.
-  response:
-    optional: false
+  target:
+    device:
+      integration: atvnotif
   fields:
     host:
       name: Host (optional)
@@ -196,19 +197,13 @@ info:
       example: "192.168.2.104"
       selector:
         text:
-    device_id:
-      name: Device (optional)
-      description: Target a specific configured Android TV Notifier device.
-      required: false
-      selector:
-        device:
-          integration: atvnotif
 
 apps:
   name: Get Installed Apps
   description: Retrieve the list of apps installed on the targeted TV.
-  response:
-    optional: false
+  target:
+    device:
+      integration: atvnotif
   fields:
     host:
       name: Host (optional)
@@ -217,19 +212,13 @@ apps:
       example: "192.168.2.104"
       selector:
         text:
-    device_id:
-      name: Device (optional)
-      description: Target a specific configured Android TV Notifier device.
-      required: false
-      selector:
-        device:
-          integration: atvnotif
 
 discover:
   name: Discover TV Devices
   description: Scan the local network for active Android TV Notifier devices.
-  response:
-    optional: false
+  target:
+    device:
+      integration: atvnotif
   fields:
     timeout:
       name: Timeout
@@ -246,8 +235,9 @@ discover:
 qr:
   name: Decode QR Image
   description: Extract pairing credentials (IP/code/name) from a QR code image (URL, local path, or Base64 string).
-  response:
-    optional: false
+  target:
+    device:
+      integration: atvnotif
   fields:
     image:
       name: Image Input
@@ -256,5 +246,6 @@ qr:
       example: "http://192.168.2.4:8123/local/pairing_qr.png"
       selector:
         text:
+
 
 
