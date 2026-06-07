@@ -125,7 +125,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     notif_sound = True
                 wakeup = call.data.get("wakeup")
                 if wakeup is None:
-                    wakeup = True
+                    wakeup = False
 
                 await notifier.async_notify(
                     message=call.data["message"],
@@ -172,7 +172,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 vol.Optional("big_image"): vol.Maybe(str),
                 vol.Optional("interact", default=False): vol.Maybe(bool),
                 vol.Optional("notif_sound", default=True): vol.Maybe(bool),
-                vol.Optional("wakeup", default=True): vol.Maybe(bool),
+                vol.Optional("wakeup", default=False): vol.Maybe(bool),
             })
         )
 

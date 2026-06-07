@@ -139,7 +139,7 @@ notify:
       name: Wake Up TV
       description: Wake the TV screen when the notification arrives.
       required: false
-      default: true
+      default: false
       selector:
         boolean:
     host:
