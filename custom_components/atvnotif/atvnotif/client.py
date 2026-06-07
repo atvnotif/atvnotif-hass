@@ -41,8 +41,11 @@ class ATVNotifier:
         decrypted = aesgcm.decrypt(iv, ciphertext, None)
         return decrypted.decode("utf-8")
 
-    async def async_get_apps(self) -> list[str]:
-        """Retrieves a list of installed apps on the TV."""
+    async def async_get_apps(self) -> list[dict]:
+        """Retrieves a list of installed apps on the TV.
+
+        Returns a list of dicts: [{"n": "App Name", "p": "com.package.name"}, ...]
+        """
         url = f"http://{self.host}:{self.port}/apps"
         encrypted_body = self.encrypt_payload({})
         async with httpx.AsyncClient() as client:

@@ -17,7 +17,7 @@ def decode_base58_uuid(s: str) -> str:
         _LOGGER.debug("Failed to decode base58 UUID from %s: %s", s, e)
         return None
 
-def discover_devices(timeout: float = 5.0) -> list[dict]:
+def discover_devices(timeout: float = 6.0) -> list[dict]:
     """Scans the network for ATV Notifier devices using zeroconf.
     
     Returns a list of dicts, e.g.:
