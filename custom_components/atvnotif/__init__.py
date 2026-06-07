@@ -117,9 +117,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 if priority is None:
                     priority = 1
                 sender = call.data.get("sender")
-                title = call.data.get("title")
-                if title is None:
-                    title = "Home Assistant"
                 interact = call.data.get("interact")
                 if interact is None:
                     interact = False
@@ -132,7 +129,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
                 await notifier.async_notify(
                     message=call.data["message"],
-                    title=title,
+                    title=call.data.get("title"),
                     sender=sender,
                     duration=duration,
                     position=position,
