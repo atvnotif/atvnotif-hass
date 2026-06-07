@@ -1,0 +1,12 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE files
+.idea/
+.vscode/
+
+# HASS config / custom files
+custom_components/atvnotif/logo.png
+custom_components/atvnotif/icon.png

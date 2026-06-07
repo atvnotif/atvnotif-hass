@@ -1,0 +1,16 @@
+{
+  "domain": "atvnotif",
+  "name": "Android TV Notifier",
+  "codeowners": [],
+  "config_flow": true,
+  "documentation": "https://github.com/smrtprjcts/atvnotif",
+  "integration_type": "hub",
+  "iot_class": "local_push",
+  "requirements": ["cryptography>=35.0.0", "httpx>=0.20.0"],
+  "zeroconf": [
+    {
+      "type": "_atvnotif._tcp.local."
+    }
+  ],
+  "version": "1.0.0"
+}
