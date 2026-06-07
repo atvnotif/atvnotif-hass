@@ -14,7 +14,7 @@ except ImportError:
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = [Platform.NOTIFY]
+PLATFORMS = [Platform.NOTIFY, Platform.SELECT]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
