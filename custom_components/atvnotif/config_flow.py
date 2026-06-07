@@ -5,7 +5,15 @@ from homeassistant import config_entries
 from homeassistant.core import callback
 import homeassistant.helpers.config_validation as cv
 
-from .const import DOMAIN, CONF_IP_ADDRESS, CONF_PORT, CONF_PAIRING_CODE, DEFAULT_PORT
+from .const import (
+    DOMAIN,
+    CONF_IP_ADDRESS,
+    CONF_PORT,
+    CONF_PAIRING_CODE,
+    DEFAULT_PORT,
+    CONF_ENABLE_APP_LAUNCHER,
+    CONF_ENABLE_NOTIFY_ENTITY,
+)
 try:
     from .atvnotif.discover import decode_base58_uuid
     from .atvnotif.qr import decode_qr_image
@@ -19,6 +27,12 @@ class ATVNotifConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Android TV Notifier."""
 
     VERSION = 1
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry):
+        """Return the options flow handler."""
+        return ATVNotifOptionsFlow(config_entry)
 
     async def async_step_user(self, user_input=None):
         """Handle the initial step."""
@@ -182,3 +196,29 @@ class ATVNotifConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data_schema=schema,
             errors=errors,
         )
+
+
+class ATVNotifOptionsFlow(config_entries.OptionsFlow):
+    """Options flow to toggle optional features (app launcher, notify entity)."""
+
+    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
+        self.config_entry = config_entry
+
+    async def async_step_init(self, user_input=None):
+        """Manage the integration options."""
+        if user_input is not None:
+            return self.async_create_entry(data=user_input)
+
+        opts = self.config_entry.options
+        schema = vol.Schema({
+            vol.Required(
+                CONF_ENABLE_NOTIFY_ENTITY,
+                default=opts.get(CONF_ENABLE_NOTIFY_ENTITY, True),
+            ): bool,
+            vol.Required(
+                CONF_ENABLE_APP_LAUNCHER,
+                default=opts.get(CONF_ENABLE_APP_LAUNCHER, True),
+            ): bool,
+        })
+
+        return self.async_show_form(step_id="init", data_schema=schema)

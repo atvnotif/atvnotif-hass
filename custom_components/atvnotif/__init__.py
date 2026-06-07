@@ -5,7 +5,14 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 
-from .const import DOMAIN, CONF_IP_ADDRESS, CONF_PORT, CONF_PAIRING_CODE
+from .const import (
+    DOMAIN,
+    CONF_IP_ADDRESS,
+    CONF_PORT,
+    CONF_PAIRING_CODE,
+    CONF_ENABLE_APP_LAUNCHER,
+    CONF_ENABLE_NOTIFY_ENTITY,
+)
 
 try:
     from atvnotif import ATVNotifier
@@ -14,7 +21,16 @@ except ImportError:
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = [Platform.NOTIFY, Platform.SELECT]
+
+def _get_platforms(entry: ConfigEntry) -> list:
+    """Return the list of platforms to load based on entry options."""
+    opts = entry.options
+    platforms = []
+    if opts.get(CONF_ENABLE_NOTIFY_ENTITY, True):
+        platforms.append(Platform.NOTIFY)
+    if opts.get(CONF_ENABLE_APP_LAUNCHER, True):
+        platforms.append(Platform.SELECT)
+    return platforms
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -22,7 +38,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = entry.data
 
-    # Register custom service calls if not already registered
+    # Register custom open_app service (once only)
     if not hass.services.has_service(DOMAIN, "open_app"):
         def get_notifier(host=None, device_id=None):
             if not hass.data[DOMAIN]:
@@ -68,13 +84,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             })
         )
 
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    platforms = _get_platforms(entry)
+    await hass.config_entries.async_forward_entry_setups(entry, platforms)
     return True
+
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
-    unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    platforms = _get_platforms(entry)
+    unload_ok = await hass.config_entries.async_unload_platforms(entry, platforms)
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id)
     return unload_ok
-

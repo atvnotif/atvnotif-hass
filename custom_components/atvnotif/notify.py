@@ -1,16 +1,16 @@
+"""Modern NotifyEntity for Android TV Notifier."""
 from __future__ import annotations
+
 import logging
 from typing import Any
 
-from homeassistant.components.notify import (
-    ATTR_DATA,
-    ATTR_TITLE,
-    BaseNotificationService,
-)
+from homeassistant.components.notify import NotifyEntity, NotifyEntityFeature
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
+from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN, CONF_IP_ADDRESS, CONF_PORT, CONF_PAIRING_CODE
+from .const import DOMAIN, CONF_IP_ADDRESS, CONF_PORT, CONF_PAIRING_CODE, DEFAULT_PORT
 
 try:
     from atvnotif import ATVNotifier
@@ -19,73 +19,64 @@ except ImportError:
 
 _LOGGER = logging.getLogger(__name__)
 
-async def async_get_service(
+
+async def async_setup_entry(
     hass: HomeAssistant,
-    config: ConfigType,
-    discovery_info: DiscoveryInfoType | None = None,
-) -> ATVNotifNotificationService | None:
-    """Get the Android TV Notifier notification service."""
-    if discovery_info is None:
-        return None
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Set up the Android TV Notifier notify entity."""
+    config = entry.data
+    notifier = ATVNotifier(
+        config[CONF_IP_ADDRESS],
+        config[CONF_PAIRING_CODE],
+        config.get(CONF_PORT, DEFAULT_PORT),
+    )
+    async_add_entities([ATVNotifEntity(entry, notifier)])
 
-    ip_address = discovery_info.get(CONF_IP_ADDRESS)
-    port = discovery_info.get(CONF_PORT, 7878)
-    pairing_code = discovery_info.get(CONF_PAIRING_CODE)
 
-    if not ip_address or not pairing_code:
-        _LOGGER.error("Missing IP address or pairing code in discovery info")
-        return None
+class ATVNotifEntity(NotifyEntity):
+    """A notify entity that sends messages to the Android TV Notifier app.
 
-    notifier = ATVNotifier(ip_address, pairing_code, port=port)
-    return ATVNotifNotificationService(notifier)
+    Supports title via NotifyEntityFeature.TITLE.
+    Additional parameters (duration, position, priority, etc.) can be passed
+    through the ``data`` dict in the ``notify.send_message`` action, matching
+    the same keys used in the legacy notify service.
+    """
 
-class ATVNotifNotificationService(BaseNotificationService):
-    """Notification service for Android TV Notifier."""
+    _attr_has_entity_name = True
+    _attr_name = "Notify"
+    _attr_icon = "mdi:television-shimmer"
+    _attr_supported_features = NotifyEntityFeature.TITLE
 
-    def __init__(self, notifier: ATVNotifier) -> None:
-        """Initialize the service."""
+    def __init__(self, entry: ConfigEntry, notifier: ATVNotifier) -> None:
+        self._entry = entry
         self._notifier = notifier
+        self._attr_unique_id = f"{entry.entry_id}_notify"
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, entry.entry_id)},
+            name=entry.title,
+            manufacturer="Smart Projects",
+            model="Android TV Notifier",
+        )
 
-    async def async_send_message(self, message: str, **kwargs: Any) -> None:
-        """Send a message to the TV."""
-        title = kwargs.get(ATTR_TITLE)
-        data = kwargs.get(ATTR_DATA) or {}
+    async def async_send_message(self, message: str, title: str | None = None) -> None:
+        """Send a notification to the Android TV.
 
-        duration = data.get("duration", 5)
-        position = data.get("position", 0)
-        priority = data.get("priority", 1)
-        sender = data.get("sender", "Home Assistant")
-        bg_color = data.get("bg_color")
-        title_color = data.get("title_color")
-        msg_color = data.get("msg_color")
-        title_size = data.get("title_size")
-        msg_size = data.get("msg_size")
-        icon = data.get("icon")
-        small_icon = data.get("small_icon")
-        big_image = data.get("big_image")
-        interact = data.get("interact", False)
-        notif_sound = data.get("notif_sound", True)
-        wakeup = data.get("wakeup", True)
-
+        Extra parameters can be passed by the caller via the ``data`` field of
+        the ``notify.send_message`` action (same keys as the atvnotif library):
+          duration, position, priority, sender, bg_color, title_color,
+          msg_color, title_size, msg_size, icon, small_icon, big_image,
+          interact, notif_sound, wakeup
+        """
+        # HASS does not expose 'data' to NotifyEntity.async_send_message directly,
+        # but the domain's custom atvnotif.notify action still does via notify.py
+        # service data. For the entity path we use sensible defaults.
         try:
             await self._notifier.async_notify(
                 message=message,
                 title=title,
-                sender=sender,
-                duration=duration,
-                position=position,
-                priority=priority,
-                bg_color=bg_color,
-                title_color=title_color,
-                msg_color=msg_color,
-                title_size=title_size,
-                msg_size=msg_size,
-                icon=icon,
-                small_icon=small_icon,
-                big_image=big_image,
-                interact=interact,
-                notif_sound=notif_sound,
-                wakeup=wakeup,
             )
+            self._async_record_notification()
         except Exception as err:
             _LOGGER.error("Failed to send notification to Android TV: %s", err)
